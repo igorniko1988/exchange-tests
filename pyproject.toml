@@ -1,7 +1,7 @@
 [project]
 name = "exchange-tests"
 version = "0.1.0"
-description = "Api and Ui automation framework for the exchange service"
+description = "API and UI automation framework for the exchange service"
 readme = "README.md"
 authors = [
     { name = "niko" }

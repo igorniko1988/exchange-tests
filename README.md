@@ -10,4 +10,8 @@ API and UI test automation framework for the exchange service (pytest, requests,
 uv sync
 
 ## Run tests
-Coming in stage 0B.
+```bash
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+```
