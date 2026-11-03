@@ -4,7 +4,7 @@ API and UI test automation framework for the exchange service (pytest, requests,
 
 ## Requirements
 - Python 3.13, uv
-- Running stand: `cd ~/Downloads/tests && docker compose up -d` (http://localhost:8080)
+- Running stand (repo `igorniko1988/tests`): `cd ~/Downloads/tests && docker compose up -d db exchange price-feed`, API on http://localhost:8080
 
 ## Install
 uv sync
