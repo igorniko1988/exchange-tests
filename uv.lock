@@ -27,7 +27,6 @@ source = { editable = "." }
 dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
-    { name = "pytest" },
 ]
 
 [package.dev-dependencies]
@@ -40,7 +39,6 @@ dev = [
 requires-dist = [
     { name = "pydantic", specifier = ">=2.14.2" },
     { name = "pydantic-settings", specifier = ">=2.16.2" },
-    { name = "pytest", specifier = ">=9.2.0" },
 ]
 
 [package.metadata.requires-dev]
