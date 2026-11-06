@@ -17,3 +17,9 @@ def test_timeout_is_read_from_env(monkeypatch):
     monkeypatch.setenv("EXCHANGE_TESTS_REQUEST_TIMEOUT", "30")
     settings = Settings(_env_file=None)
     assert settings.REQUEST_TIMEOUT == 30
+
+
+def test_password():
+    settings = Settings(_env_file=None)
+    assert 'admin-password' not in settings.ADMIN_PASSWORD
+    assert settings.ADMIN_PASSWORD.get_secret_value() == 'admin-password'
