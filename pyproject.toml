@@ -1,7 +1,7 @@
 [project]
 name = "framework"
 version = "0.1.0"
-description = "Test automation framework for ecxhange service"
+description = "Test automation framework for exchange service"
 readme = "README.md"
 authors = [
     { name = "igornikolisen", email = "igor.nikolishen@gmail.com" }
