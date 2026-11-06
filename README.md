@@ -1,15 +1,20 @@
 # exchange-tests
 
-API and UI test automation framework for the exchange service (pytest, requests, Playwright).
+Test automation framework for the exchange service.
 
 ## Requirements
-- Python 3.13, uv
-- Running stand (repo `igorniko1988/tests`): `cd ~/Downloads/tests && docker compose up -d db exchange price-feed`, API on http://localhost:8080
+
+- Python 3.12
+- [uv](https://docs.astral.sh/uv/)
 
 ## Install
-uv sync
 
-## Run tests
+```bash
+uv sync
+```
+
+## Checks
+
 ```bash
 uv run pytest
 uv run ruff check .

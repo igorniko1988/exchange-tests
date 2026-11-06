@@ -1,5 +1,5 @@
 import framework
 
 
-def test_framework_is_importable():
+def test_import_is_correct():
     assert framework.__name__ == "framework"
