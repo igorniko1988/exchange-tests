@@ -28,7 +28,10 @@ def test_user_update_account_details(authorized_api):
     assert r.status_code == 200
 
 
-@pytest.mark.xfail(reason="Bug should be fixed, for now role is possible to change")
+@pytest.mark.xfail(
+    reason="Bug should be fixed, for now role is possible to change",
+    strict=True
+)
 def test_user_shouldnt_change_its_role(authorized_api):
     role = authorized_api.auth.me()
     assert role.status_code == 200
@@ -42,7 +45,6 @@ def test_user_update_refresh_token(api, creds):
     api.auth.register(**creds)
     response = api.auth.login(**creds)
     assert response.status_code == 200
-    login_response = response
-    assert login_response.status_code == 200
-    refreshed_token = api.auth.refresh_token(login_response.json()["refresh_token"])
-    assert login_response.json()["refresh_token"] != refreshed_token.json()["refresh_token"]
+    refreshed_token = api.auth.refresh_token(response.json()["refresh_token"])
+    assert refreshed_token.status_code == 200
+    assert response.json()["refresh_token"] != refreshed_token.json()["refresh_token"]
