@@ -28,10 +28,7 @@ def test_user_update_account_details(authorized_api):
     assert r.status_code == 200
 
 
-@pytest.mark.xfail(
-    reason="Bug should be fixed, for now role is possible to change",
-    strict=True
-)
+@pytest.mark.xfail(reason="Bug should be fixed, for now role is possible to change", strict=True)
 def test_user_shouldnt_change_its_role(authorized_api):
     role = authorized_api.auth.me()
     assert role.status_code == 200
