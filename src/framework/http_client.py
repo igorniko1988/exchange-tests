@@ -19,6 +19,12 @@ class HttpClient:
         logger.info(f"{method} {url} {response.status_code} {response.elapsed}")
         return response
 
+    def set_token(self, token):
+        self.session.headers.update({"Authorization": f"Bearer {token}"})
+
+    def clear_token(self):
+        self.session.headers.pop("Authorization", None)
+
     def get(self, path, **kwargs) -> requests.Response:
         return self.request("GET", path, **kwargs)
 
