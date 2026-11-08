@@ -8,5 +8,5 @@ class BalancesService(BaseService):
         return self.client.get("/balances")
 
     def deposit(self, asset: str, amount: int | Decimal):
-        data = {"asset": asset, "amount": amount}
+        data = {"asset": asset, "amount": str(amount)}
         return self.client.post("/balances/deposit", json=data)
