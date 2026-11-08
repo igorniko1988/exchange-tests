@@ -1,7 +1,7 @@
 import pytest
-from faker import Faker
 
 from framework.api import Api
+from framework.data.generators import credentials
 from framework.http_client import HttpClient
 from framework.settings import Settings
 
@@ -14,8 +14,7 @@ def settings():
 
 @pytest.fixture
 def creds():
-    faker = Faker()
-    return {"email": faker.email(), "password": faker.password()}
+    return credentials()
 
 
 @pytest.fixture
