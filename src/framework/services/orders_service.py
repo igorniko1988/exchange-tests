@@ -3,8 +3,8 @@ from framework.services.base_service import BaseService
 
 
 class OrdersService(BaseService):
-    def create(self, create: CreateOrderRequest):
-        body = create.model_dump(mode="json", exclude_none=True)
+    def create(self, order: CreateOrderRequest):
+        body = order.model_dump(mode="json", exclude_none=True)
         return self.client.post("/orders", json=body)
 
     def list(self, status: str | None = None):

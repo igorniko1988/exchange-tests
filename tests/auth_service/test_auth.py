@@ -4,6 +4,7 @@ from framework.models.token import Token
 from framework.models.user import User, UserMe
 
 
+@pytest.mark.smoke
 def test_registration_user_returns_user_email(api, creds):
     r = api.auth.register(**creds)
     assert r.status_code == 201
@@ -11,6 +12,7 @@ def test_registration_user_returns_user_email(api, creds):
     assert user.email == creds["email"]
 
 
+@pytest.mark.smoke
 def test_user_login_returns_access_and_refresh_tokens(api, creds):
     r = api.auth.register(**creds)
     assert r.status_code == 201
@@ -22,6 +24,7 @@ def test_user_login_returns_access_and_refresh_tokens(api, creds):
     assert token.access_token
 
 
+@pytest.mark.smoke
 def test_me_returns_users_details(authorized_api, creds):
     r = authorized_api.auth.me()
     assert r.status_code == 200

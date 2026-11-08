@@ -1,12 +1,15 @@
+from decimal import Decimal
+
 import pytest
 
 from framework.api import Api
-from framework.data.generators import credentials
+from framework.data.generators import credentials, make_order
 from framework.http_client import HttpClient
+from framework.models.orders import Order
 from framework.settings import Settings
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def settings():
     settings = Settings()
     return settings
@@ -40,3 +43,39 @@ def api(http_client):
 def authorized_api(api, token):
     api.client.set_token(token)
     return api
+
+
+@pytest.fixture()
+def make_user(settings):
+    def _make():
+        user_creds = credentials()
+        http_client = HttpClient(settings.BASE_URL, settings.REQUEST_TIMEOUT)
+        app = Api(http_client)
+        register = app.auth.register(**user_creds)
+        assert register.status_code == 201, register.text
+        token = app.auth.login(**user_creds).json()["access_token"]
+        app.client.set_token(token)
+        return app
+
+    return _make
+
+
+@pytest.fixture()
+def funded_user(make_user):
+    def _fund(asset: str, amount: Decimal, user: Api | None = None):
+        if user is None:
+            user = make_user()
+        deposit = user.balances.deposit(asset=asset, amount=amount)
+        assert deposit.status_code == 200, deposit.text
+        return user
+
+    return _fund
+
+
+@pytest.fixture()
+def create_order(funded_user):
+    order = make_order(quantity=23)
+    user = funded_user(asset="BTC", amount=Decimal(1000))
+    r = user.orders.create(order)
+    assert r.status_code == 201, r.text
+    return user, Order.model_validate(r.json())

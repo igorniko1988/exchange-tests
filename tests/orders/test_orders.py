@@ -1,19 +1,19 @@
 from decimal import Decimal
 
+import pytest
+
 from framework.data.generators import make_order
 from framework.models.orders import Order
 
 
-def test_create_order_shows_correct_quantity(authorized_api):
-    deposit = authorized_api.balances.deposit("BTC", 100)
-    assert deposit.status_code == 200
-    order_data = make_order(quantity=23)
-    r = authorized_api.orders.create(order_data)
-    assert r.status_code == 201
-    order = Order.model_validate(r.json())
+@pytest.mark.critical
+def test_create_order_shows_correct_quantity(create_order):
+    user, order = create_order
+    print(order.quantity)
     assert order.quantity == Decimal(23)
 
 
+@pytest.mark.critical
 def test_get_orders(authorized_api):
     deposit = authorized_api.balances.deposit("USDT", 1000)
     assert deposit.status_code == 200
@@ -42,6 +42,7 @@ def test_get_order_by_id(authorized_api):
     assert order.id == order_id
 
 
+@pytest.mark.critical
 def test_user_can_delete_order(authorized_api):
     deposit = authorized_api.balances.deposit("USDT", 1000)
     assert deposit.status_code == 200

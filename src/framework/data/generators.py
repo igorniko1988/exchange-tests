@@ -6,7 +6,7 @@ from framework.models.orders import CreateOrderRequest
 
 
 def unique_email():
-    return f"user{uuid.uuid4().hex[:8]}@mail.com"
+    return f"user{uuid.uuid4().hex}@mail.com"
 
 
 def credentials():
