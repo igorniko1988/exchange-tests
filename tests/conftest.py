@@ -47,6 +47,9 @@ def authorized_api(api, token):
 
 @pytest.fixture()
 def make_user(settings):
+
+    users: list[Api] = []
+
     def _make():
         user_creds = credentials()
         http_client = HttpClient(settings.BASE_URL, settings.REQUEST_TIMEOUT)
@@ -55,9 +58,19 @@ def make_user(settings):
         assert register.status_code == 201, register.text
         token = app.auth.login(**user_creds).json()["access_token"]
         app.client.set_token(token)
+        users.append(app)
         return app
 
-    return _make
+    yield _make
+
+    for u in users:
+        orders = u.orders.list(status='NEW')
+        assert orders.status == 200
+        for order in orders.json():
+            cancel = u.orders.cancel(order['id'])
+            if cancel.status_code != 200:
+                print(f'Order {order['id']}doesnt cancel due to {cancel.text}')
+
 
 
 @pytest.fixture()
