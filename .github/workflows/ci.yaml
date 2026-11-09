@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  lint:                                   # без изменений
+  lint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -26,25 +26,24 @@ jobs:
       - run: uv run ruff check
       - run: uv run ruff format --check
 
-  tests:                                  # НОВАЯ job: на одном уровне с lint
+  tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 20                   # дольше, чем у lint: сборка образа и тесты
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7         # 1) забрать ВАШ код (тесты) в корень рабочей папки
-
-      - uses: actions/checkout@v7         # 2) второй checkout: забрать СТЕНД
+      - uses: actions/checkout@v7                  # ваш код
+      - uses: actions/checkout@v7                  # стенд в подпапку stand
         with:
-          repository: igorniko1988/tests  #    какой репозиторий (публичный, токен не нужен)
-          path: stand                     #    в какую подпапку положить (чтобы не затёрло ваш код)
-
-      - name: Start stand                 # 3) поднять стенд
-        working-directory: stand          #    выполнить команду в папке stand
+          repository: igorniko1988/tests
+          path: stand
+      - name: Start stand                          # поднять только db и exchange
+        working-directory: stand
         run: docker compose up -d --build db exchange
-                                          #    up -d: запустить в фоне; --build: собрать образ;
-                                          #    db exchange: только эти два сервиса, остальное не нужно
-
-      - name: Wait for stand              # 4) дождаться готовности
+      - name: Wait for stand                       # ждать /health до 120 секунд
         run: >
           curl --fail --silent --show-error
-          --retry 30 --retry-delay 2 --retry-connrefused --retry-max-time 120
+          --retry 30 --retry-delay 2 --retry-connrefused --retry-all-errors --retry-max-time 120
           http://localhost:8080/health
+      - name: Stand logs                           # логи стенда, только если что-то упало
+        if: failure()
+        working-directory: stand
+        run: docker compose logs
