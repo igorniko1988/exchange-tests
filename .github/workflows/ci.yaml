@@ -5,12 +5,12 @@ on:
   push:
     branches: [main]
 
-permissions:                      # права токена: только чтение кода
+permissions:
   contents: read
 
-concurrency:                      # один активный запуск на ветку
-  group: ${{ github.workflow }}-${{ github.ref }}      # группа: имя workflow + ветка
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}   # отменять старый только на PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   lint:
@@ -19,9 +19,47 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.3
-        with:                                   # входы действия
-          enable-cache: true                    # кэш зависимостей uv
-          cache-dependency-glob: uv.lock        # ключ кэша зависит от uv.lock
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
       - run: uv sync
       - run: uv run ruff check
       - run: uv run ruff format --check
+
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          repository: igorniko1988/tests
+          path: stand
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync
+      - name: Start stand
+        working-directory: stand
+        run: docker compose up -d --build db exchange
+      - name: Wait for stand
+        run: >
+          curl --fail --silent --show-error
+          --retry 30 --retry-delay 2 --retry-connrefused --retry-all-errors --retry-max-time 120
+          http://localhost:8080/health
+      - name: Smoke tests
+        run: uv run pytest -m smoke --alluredir=allure-results      # НОВЫЙ ключ
+      - name: All tests
+        run: uv run pytest --alluredir=allure-results               # НОВЫЙ ключ
+      - name: Stand logs
+        if: failure()
+        working-directory: stand
+        run: docker compose logs
+      - name: Upload Allure results                                 # НОВЫЙ шаг
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-results
+          path: allure-results
+          retention-days: 7
