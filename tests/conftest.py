@@ -65,7 +65,7 @@ def make_user(settings):
 
     for u in users:
         orders = u.orders.list(status='NEW')
-        assert orders.status == 200
+        assert orders.status_code == 200
         for order in orders.json():
             cancel = u.orders.cancel(order['id'])
             if cancel.status_code != 200:
