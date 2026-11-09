@@ -64,13 +64,12 @@ def make_user(settings):
     yield _make
 
     for u in users:
-        orders = u.orders.list(status='NEW')
+        orders = u.orders.list(status="NEW")
         assert orders.status_code == 200
         for order in orders.json():
-            cancel = u.orders.cancel(order['id'])
+            cancel = u.orders.cancel(order["id"])
             if cancel.status_code != 200:
-                print(f'Order {order['id']}doesnt cancel due to {cancel.text}')
-
+                print(f"Order {order['id']}doesnt cancel due to {cancel.text}")
 
 
 @pytest.fixture()
