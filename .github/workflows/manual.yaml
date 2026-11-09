@@ -1,0 +1,28 @@
+name: manual
+
+# Ручной запуск: Actions → manual → Run workflow, выбрать набор тестов.
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "Какой набор запускать"
+        type: choice
+        options:
+          - smoke
+          - critical
+          - all
+        default: smoke
+
+permissions:
+  contents: read
+
+concurrency:
+  group: manual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  manual:
+    uses: ./.github/workflows/reusable-tests.yaml
+    with:
+      marker: ${{ inputs.suite }}
+      retention-days: 7

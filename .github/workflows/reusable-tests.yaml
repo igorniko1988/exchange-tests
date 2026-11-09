@@ -1,0 +1,88 @@
+name: reusable-tests
+
+# Общая часть для nightly и manual: поднять стенд, прогнать тесты, собрать отчёт.
+# Сам по себе не запускается, его вызывают другие workflow (on: workflow_call).
+on:
+  workflow_call:
+    inputs:
+      marker:
+        description: "Выражение для pytest -m. Пусто или all: все тесты"
+        type: string
+        default: all
+      retention-days:
+        description: "Сколько дней хранить артефакты"
+        type: number
+        default: 14
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          repository: igorniko1988/tests
+          path: stand
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync
+      - name: Start stand
+        working-directory: stand
+        run: docker compose up -d --build db exchange
+      - name: Wait for stand
+        run: >
+          curl --fail --silent --show-error
+          --retry 30 --retry-delay 2 --retry-connrefused --retry-all-errors --retry-max-time 120
+          http://localhost:8080/health
+      - name: Run tests
+        env:
+          MARKER: ${{ inputs.marker }}       # через env, а не прямой подстановкой в команду
+        run: |
+          if [ -z "$MARKER" ] || [ "$MARKER" = "all" ]; then
+            uv run pytest --alluredir=allure-results
+          else
+            uv run pytest -m "$MARKER" --alluredir=allure-results
+          fi
+      - name: Stand logs
+        if: failure()
+        working-directory: stand
+        run: docker compose logs
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-results
+          path: allure-results
+          retention-days: ${{ inputs.retention-days }}
+
+  report:
+    needs: tests
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: allure-results
+          path: allure-results
+      - name: Check results for leaked tokens
+        run: |
+          if grep -rq "eyJ" allure-results; then
+            echo "possible JWT token in allure-results"
+            exit 1
+          fi
+      - name: Install Allure
+        run: npm install -g allure
+      - name: Build report
+        run: allure generate allure-results --clean -o allure-report
+      - uses: actions/upload-artifact@v7
+        with:
+          name: allure-report
+          path: allure-report
+          retention-days: ${{ inputs.retention-days }}
