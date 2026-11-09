@@ -1,6 +1,9 @@
 import logging
 
+import allure
 import requests
+
+from framework.masking import mask_body, mask_headers
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +20,21 @@ class HttpClient:
         url = f"{self.base_url}/{path.lstrip('/')}"
         response = self.session.request(method, url, **kwargs)
         logger.info(f"{method} {url} {response.status_code} {response.elapsed}")
+        self._attach(response)
         return response
+
+    def _attach(self, response):
+        req = response.request
+        allure.attach(
+            f"{req.method} {req.url}\n\n{mask_headers(req.headers)}\n\n{mask_body(req.body)}",
+            name="request",
+            attachment_type=allure.attachment_type.TEXT,
+        )
+        allure.attach(
+            f"{response.status_code}\n\n{mask_body(response.text)}",
+            name="response",
+            attachment_type=allure.attachment_type.JSON,
+        )
 
     def set_token(self, token):
         self.session.headers.update({"Authorization": f"Bearer {token}"})
