@@ -1,9 +1,26 @@
 from decimal import Decimal
 
+import allure
 import pytest
 
 from framework.data.generators import make_order
 from framework.models.orders import Order
+
+
+@allure.feature("Orders")
+@allure.story("Cancel order")
+@allure.severity(allure.severity_level.CRITICAL)
+@allure.title("Пользователь отменяет свой ордер")
+def test_user_can_delete_order(create_order):
+    user, order = create_order
+    with allure.step("Отменить ордер"):
+        cancel = user.orders.cancel(order_id=order.id)
+        assert cancel.status_code == 200, cancel.text
+
+    with allure.step("Проверить статус CANCELED"):
+        r = user.orders.get(order.id)
+        assert r.status_code == 200, r.text
+        assert Order.model_validate(r.json()).status == "CANCELED"
 
 
 @pytest.mark.critical
