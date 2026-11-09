@@ -1,0 +1,20 @@
+name: nightly
+
+# Ночной полный прогон. Запускается по расписанию на ветке main.
+on:
+  schedule:
+    - cron: "0 2 * * *"        # каждый день в 02:00 UTC
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false    # ночной прогон доводим до конца
+
+jobs:
+  nightly:
+    uses: ./.github/workflows/reusable-tests.yaml
+    with:
+      marker: all
+      retention-days: 14
