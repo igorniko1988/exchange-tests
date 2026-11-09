@@ -1,17 +1,27 @@
-name: ci                          # имя, оно показывается во вкладке Actions и в Checks
+name: ci
 
-on:                               # когда запускать
-  pull_request:                   # на каждый PR (двоеточие, значение пустое)
-  push:                           # на каждый пуш...
-    branches: [main]              # ...но только в ветку main
+on:
+  pull_request:
+  push:
+    branches: [main]
 
-jobs:                             # набор задач
-  lint:                           # имя задачи (любое), оно же имя проверки в PR
-    runs-on: ubuntu-latest        # на какой машине запускать (без точки с запятой!)
-    timeout-minutes: 10           # убить задачу, если висит дольше 10 минут
-    steps:                        # шаги задачи, идут по порядку
-      - uses: actions/checkout@v7            # готовое действие: забрать код репозитория
-      - uses: astral-sh/setup-uv@v10.3.3     # готовое действие: поставить uv
-      - run: uv sync                         # своя команда: поставить зависимости проекта
-      - run: uv run ruff check               # своя команда: линтер
-      - run: uv run ruff format --check      # своя команда: проверка форматирования
+permissions:                      # права токена: только чтение кода
+  contents: read
+
+concurrency:                      # один активный запуск на ветку
+  group: ${{ github.workflow }}-${{ github.ref }}      # группа: имя workflow + ветка
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}   # отменять старый только на PR
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:                                   # входы действия
+          enable-cache: true                    # кэш зависимостей uv
+          cache-dependency-glob: uv.lock        # ключ кэша зависит от uv.lock
+      - run: uv sync
+      - run: uv run ruff check
+      - run: uv run ruff format --check
