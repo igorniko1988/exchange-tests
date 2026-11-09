@@ -11,6 +11,17 @@ def test_registration_user_returns_user_email(api, creds):
     user = User.model_validate(r.json())
     assert user.email == creds["email"]
 
+@pytest.mark.parametrize('email, password',(
+    ['asdsad','sadsadas'],
+    ['123',13123],
+    [-1,-2]
+))
+def test_user_email_negative(api, email, password):
+    r = api.auth.register(email=email, password=password)
+    assert r.status_code == 422
+    assert r.json()['error']['code'] == 'validation_error'
+
+
 
 @pytest.mark.smoke
 def test_user_login_returns_access_and_refresh_tokens(api, creds):
