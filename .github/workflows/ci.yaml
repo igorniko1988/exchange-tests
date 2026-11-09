@@ -30,16 +30,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7                  # ваш код
-      - uses: actions/checkout@v7                  # стенд в подпапку stand
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
           repository: igorniko1988/tests
           path: stand
-      - uses: astral-sh/setup-uv@v10.3.3           # НОВОЕ: установить uv (с кэшем)
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
-      - run: uv sync                               # НОВОЕ: зависимости проекта
+      - run: uv sync
       - name: Start stand
         working-directory: stand
         run: docker compose up -d --build db exchange
@@ -48,11 +48,18 @@ jobs:
           curl --fail --silent --show-error
           --retry 30 --retry-delay 2 --retry-connrefused --retry-all-errors --retry-max-time 120
           http://localhost:8080/health
-      - name: Smoke tests                          # НОВОЕ: быстрый прогон первым
-        run: uv run pytest -m smoke
-      - name: All tests                            # НОВОЕ: полный набор
-        run: uv run pytest
+      - name: Smoke tests
+        run: uv run pytest -m smoke --alluredir=allure-results      # НОВЫЙ ключ
+      - name: All tests
+        run: uv run pytest --alluredir=allure-results               # НОВЫЙ ключ
       - name: Stand logs
         if: failure()
         working-directory: stand
         run: docker compose logs
+      - name: Upload Allure results                                 # НОВЫЙ шаг
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-results
+          path: allure-results
+          retention-days: 7
