@@ -5,23 +5,46 @@ on:
   push:
     branches: [main]
 
-permissions:                      # права токена: только чтение кода
+permissions:
   contents: read
 
-concurrency:                      # один активный запуск на ветку
-  group: ${{ github.workflow }}-${{ github.ref }}      # группа: имя workflow + ветка
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}   # отменять старый только на PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  lint:
+  lint:                                   # без изменений
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.3
-        with:                                   # входы действия
-          enable-cache: true                    # кэш зависимостей uv
-          cache-dependency-glob: uv.lock        # ключ кэша зависит от uv.lock
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
       - run: uv sync
       - run: uv run ruff check
       - run: uv run ruff format --check
+
+  tests:                                  # НОВАЯ job: на одном уровне с lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 20                   # дольше, чем у lint: сборка образа и тесты
+    steps:
+      - uses: actions/checkout@v7         # 1) забрать ВАШ код (тесты) в корень рабочей папки
+
+      - uses: actions/checkout@v7         # 2) второй checkout: забрать СТЕНД
+        with:
+          repository: igorniko1988/tests  #    какой репозиторий (публичный, токен не нужен)
+          path: stand                     #    в какую подпапку положить (чтобы не затёрло ваш код)
+
+      - name: Start stand                 # 3) поднять стенд
+        working-directory: stand          #    выполнить команду в папке stand
+        run: docker compose up -d --build db exchange
+                                          #    up -d: запустить в фоне; --build: собрать образ;
+                                          #    db exchange: только эти два сервиса, остальное не нужно
+
+      - name: Wait for stand              # 4) дождаться готовности
+        run: >
+          curl --fail --silent --show-error
+          --retry 30 --retry-delay 2 --retry-connrefused --retry-max-time 120
+          http://localhost:8080/health
