@@ -35,15 +35,24 @@ jobs:
         with:
           repository: igorniko1988/tests
           path: stand
-      - name: Start stand                          # поднять только db и exchange
+      - uses: astral-sh/setup-uv@v10.3.3           # НОВОЕ: установить uv (с кэшем)
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync                               # НОВОЕ: зависимости проекта
+      - name: Start stand
         working-directory: stand
         run: docker compose up -d --build db exchange
-      - name: Wait for stand                       # ждать /health до 120 секунд
+      - name: Wait for stand
         run: >
           curl --fail --silent --show-error
           --retry 30 --retry-delay 2 --retry-connrefused --retry-all-errors --retry-max-time 120
           http://localhost:8080/health
-      - name: Stand logs                           # логи стенда, только если что-то упало
+      - name: Smoke tests                          # НОВОЕ: быстрый прогон первым
+        run: uv run pytest -m smoke
+      - name: All tests                            # НОВОЕ: полный набор
+        run: uv run pytest
+      - name: Stand logs
         if: failure()
         working-directory: stand
         run: docker compose logs
